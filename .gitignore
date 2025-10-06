@@ -1,0 +1,27 @@
+# Python bytecode
+__pycache__/
+*.py[cod]        # ≡ *.pyc, *.pyo, and *.pyd.
+
+# Virtual environments (Python)
+.venv/
+venv/
+env/
+
+# Jupyter temp files
+.ipynb_checkpoints/
+*.ipynb~
+
+# LAMMPS output / large data
+outputs/
+*.log
+*.dump
+*.dat
+*.bin
+*.xyz
+*.npy
+*.npz
+
+# OS / editor noise
+.DS_Store        # macOS
+Thumbs.db        # Windows
+*.swp            # vim/other editors

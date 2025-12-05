@@ -7,6 +7,9 @@ __pycache__/
 venv/
 env/
 
+# Local path to the user's LAMMPS executable
+config/lammps_path.txt
+
 # Jupyter temp files
 .ipynb_checkpoints/
 *.ipynb~

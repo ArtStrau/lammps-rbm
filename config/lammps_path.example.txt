@@ -1,0 +1,2 @@
+# Replace with the full path to your LAMMPS executable
+lmp

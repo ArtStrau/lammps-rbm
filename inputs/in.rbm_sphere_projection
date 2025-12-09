@@ -20,17 +20,17 @@
 
 # --- Simulation parameters (overridable via -var) ---
 
-variable N        equal 10000             # number of noninteracting dipolar particles
-variable L        equal 10.0              # simulation box size
-variable T        equal 1.0               # temperature (LJ units; k_B = 1)
-variable Dt       equal 1.0               # translational diffusion coefficient
-variable Dr       equal 3.0               # rotational diffusion coefficient
-variable dt       equal 1.0e-1            # integration timestep
-variable nsteps   equal 1000              # total number of integration steps
+variable N        index 10000             # number of noninteracting dipolar particles
+variable L        index 10.0              # simulation box size
+variable T        index 1.0               # temperature (LJ units; k_B = 1)
+variable Dt       index 1.0               # translational diffusion coefficient
+variable Dr       index 3.0               # rotational diffusion coefficient
+variable dt       index 1.0e-1            # integration timestep
+variable nsteps   index 1000              # total number of integration steps
 
-variable seed_pos equal 13579             # random seed for initial positions
-variable seed_dip equal 24681357          # random seed for initial dipole orientations
-variable seed_bd  equal 97531             # random seed for Brownian noise
+variable seed_pos index 13579             # random seed for initial positions
+variable seed_dip index 24681357          # random seed for initial dipole orientations
+variable seed_bd  index 97531             # random seed for Brownian noise
 
 # Einstein relations (k_B = 1 in LJ units):
 variable gamma_t  equal ${T}/${Dt}        # translational friction coefficient
@@ -58,8 +58,8 @@ create_box         1 box
 # Create N particles at random positions in the box
 create_atoms       1 random ${N} ${seed_pos} NULL
 
-# Size/mass (give type mass, diameter, and density -> per-atom mass computed)
-mass               1 1.0
+# Size/mass (type mass required, diameter, and density -> per-atom mass computed)
+mass               1 1.0                 # irrelevant for overdamped dynamics, formally required
 set                type 1 diameter 1.0
 set                type 1 density 1.0
 

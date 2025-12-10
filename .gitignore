@@ -14,6 +14,9 @@ config/lammps_path.txt
 .ipynb_checkpoints/
 *.ipynb~
 
+# Heavy angle samples 
+data/angles_*.dat
+
 # LAMMPS output / large data
 outputs/
 *.log

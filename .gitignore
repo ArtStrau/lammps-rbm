@@ -10,8 +10,10 @@ env/
 # Local path to the user's LAMMPS executable
 config/lammps_path.txt
 
-# Jupyter temp files
-.ipynb_checkpoints/
+# Jupyter/ IPython temp files
+**/.ipynb_checkpoints/
+**/.virtual_documents/
+
 *.ipynb~
 
 # Heavy angle samples 
@@ -19,9 +21,11 @@ data/angles_*.dat
 
 # LAMMPS output / large data
 outputs/
+log.*
 *.log
 *.dump
 *.dat
+*.raw
 *.bin
 *.xyz
 *.npy

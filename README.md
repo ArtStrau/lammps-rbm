@@ -15,7 +15,7 @@ The integrators target RBM of **axisymmetric particles** (orientation dynamics o
 - For larger timesteps (right panel), the Euler+projection scheme deviates strongly, whereas the geometric integrator remains close to the analytical result.
 
 <div align="center">
-  <img src="figs/pdf_Dr1.0_dt0.02_comparison.png" width="340">
+  <img src="figs/pdf_Dr1.0_dt0.02_comparison.png" width="340"> &ensp;
   <img src="figs/pdf_Dr1.0_dt0.3_comparison.png" width="340"> <br>
   Small timestep: Δt=0.02 (left). Large timestep: Δt=0.30 (right).
 </div>
@@ -27,7 +27,7 @@ The integrators target RBM of **axisymmetric particles** (orientation dynamics o
    (input scripts in `inputs/`, logs in `outputs/`).
 2. **Compute PDFs from LAMMPS angles** (numerics):
 
-   * `scripts/compute_pdf_from_angles.py` → `data/pdf_lammps_{proj,geom}\...dat`
+   * `scripts/compute_pdf_from_angles.py` → `data/pdf_lammps_{proj,geom}_...dat`
 
 3. **Compute analytical PDFs** (exact / projection / geometric):
 

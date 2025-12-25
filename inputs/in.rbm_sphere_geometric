@@ -1,10 +1,9 @@
-# in.rbm_sphere_projection
+# in.rbm_sphere_geometric
 #
 # Overdamped rotational Brownian motion (RBM) of noninteracting dipolar spheres.
 # - N spherical particles with orientations (dipoles) diffusing on the unit sphere
 # - Overdamped dynamics for both translation and rotation
-# - Uses the projection scheme due to Briels et al.,
-#   as implemented in LAMMPS by fix brownian/sphere
+# - Uses the GEOMETRIC integrator suggested in the reference below.
 # - Outputs angle time series for all particles for statistical analysis
 #
 # Reference for the analysis and comparison:
@@ -12,16 +11,16 @@
 #   open access, doi:10.1103/wzdn-29p4
 #
 # Usage (examples):
-#   lmp -in inputs/in.rbm_sphere_projection
-#   lmp -log outputs/log.rbm_sphere_projection -in inputs/in.rbm_sphere_projection
+#   lmp -in inputs/in.rbm_sphere_geometric
+#   lmp -log outputs/log.rbm_sphere_geometric -in inputs/in.rbm_sphere_geometric
 #   lmp -var N 5000 -var Dr 1.0 -var dt 0.1 -var nsteps 10000 \
-#       -log outputs/log.rbm_sphere_projection -in inputs/in.rbm_sphere_projection
+#       -log outputs/log.rbm_sphere_geometric -in inputs/in.rbm_sphere_geometric
 #
 # Note:
 # - If you do not pass "-log ...", LAMMPS writes the default log file "log.lammps"
 #   in the current working directory
 # - For consistent log file naming/location in this repo, pass an explicit
-#   "-log outputs/log.rbm_sphere_projection".
+#   "-log outputs/log.rbm_sphere_geometric".
 
 
 # --- Simulation parameters (overridable via -var) ---
@@ -45,7 +44,7 @@ variable gamma_r  equal ${T}/${Dr}        # rotational friction coefficient
 # all outputs go into a subdirectory "outputs" relative to the working directory
 variable outdir string "outputs"          # set the output directory
 shell mkdir ${outdir}                     # create output directory if it does not exist
-print "rot_style = projection"            # output the type of rotational integrator
+print "rot_style = geometric"             # output the type of rotational integrator
 
 
 # --- System setup ---
@@ -81,7 +80,7 @@ pair_style         none
 variable rng       string gaussian   # Gaussian noise distribution (zero mean, unit variance)
 
 # Overdamped Brownian dynamics for spheres with rotational degrees of freedom
-fix                BD all brownian/sphere ${T} ${seed_bd} rng ${rng} gamma_t ${gamma_t} gamma_r ${gamma_r} rot_style projection
+fix                BD all brownian/sphere ${T} ${seed_bd} rng ${rng} gamma_t ${gamma_t} gamma_r ${gamma_r} rot_style geometric
 
 timestep           ${dt}
 
@@ -120,7 +119,7 @@ thermo_style       custom step temp v_gamma_t v_gamma_r
 thermo             100
 
 # Output angles (from step 1 onwards) 
-dump               angles all custom 1 ${outdir}/angles_sphere_projection.raw f_ang_out
+dump               angles all custom 1 ${outdir}/angles_sphere_geometric.raw f_ang_out
 dump_modify        angles append no sort id format line "%.9f"       # overwrite, do not append
 
 # do the run

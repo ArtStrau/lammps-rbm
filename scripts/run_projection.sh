@@ -1,4 +1,18 @@
 #!/usr/bin/env bash
+
+# Bash launcher for the RBM test using projection integrator.
+# 
+# - Reads the LAMMPS executable path from config/lammps_path.txt (if present, else uses "lmp")
+# - Runs inputs/in.rbm_sphere_projection from the repo root
+# - Writes the log to outputs/log.rbm_sphere_projection
+# - Outputs angle time series to outputs/angles_sphere_projection.raw
+# - Forwards any extra command-line arguments directly to LAMMPS
+#
+# Usage:
+#  bash scripts/run_projection.sh
+#  bash scripts/run_projection.sh -var N 10000 -var Dr 1.0 -var dt 0.3 -var nsteps 1000
+# Requires bash; on Windows use Git Bash or WSL/WSL2
+
 set -euo pipefail
 
 # Determine script and repo paths
@@ -9,18 +23,18 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CONFIG_PATH="${REPO_ROOT}/config/lammps_path.txt"
 
 if [[ -f "${CONFIG_PATH}" ]]; then
-    LMP_EXE="$(<"${CONFIG_PATH}")"
+    LMP_EXE="$(tr -d '\r' < "${CONFIG_PATH}")"
 else
     LMP_EXE="lmp"
 fi
 
 OUTDIR="${REPO_ROOT}/outputs"
 INPUT="${REPO_ROOT}/inputs/in.rbm_sphere_projection"
-LOG="${OUTDIR}/log.lammps"
+LOG="${OUTDIR}/log.rbm_sphere_projection"
 
 mkdir -p "${OUTDIR}"
 
-# --- clean projection-related outputs + generic log.lammps ---
+# --- clean projection-related outputs, including log ---
 
 # remove any file in outputs/ whose name contains "projection"
 for f in "${OUTDIR}"/*projection*; do
@@ -28,11 +42,6 @@ for f in "${OUTDIR}"/*projection*; do
         rm -f "$f"
     fi
 done
-
-# remove generic log.lammps if present
-if [[ -f "${LOG}" ]]; then
-    rm -f "${LOG}"
-fi
 
 # --------------------------------------------------------------
 

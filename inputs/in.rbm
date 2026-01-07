@@ -1,8 +1,11 @@
-# in.rbm_sphere
+# in.rbm
 #
-# Overdamped rotational Brownian motion (RBM) of noninteracting dipolar spheres.
-# - N spherical particles with orientations (dipoles) diffusing on the unit sphere
+# Overdamped rotational Brownian motion (RBM) of noninteracting dipolar particles
+# in the two (2D; here, pure 2D) or three (3D) dimensional space
 # - Overdamped dynamics for both translation and rotation
+# - N spheres or discs with orientations (dipoles) diffusing on the unit sphere or circle
+#   3D RBM: each particle is a spherical dipole diffusing on a sphere (manifold = sphere)
+#   2D RBM: each particle is a disc dipole diffusing on a circle (manifold = circle)
 # - Uses either the geometric integrator suggested in the reference below
 #   or the projection scheme due to Briels et al.
 #   as implemented in LAMMPS by fix brownian/sphere
@@ -13,23 +16,33 @@
 #   open access, doi:10.1103/wzdn-29p4
 #
 # Usage (examples):
-#   lmp -in inputs/in.rbm_sphere
-#   lmp -log outputs/log.rbm_sphere_geometric -in inputs/in.rbm_sphere
+#   lmp -in inputs/in.rbm
+#   lmp -log outputs/log_rbm_circle_geometric.lammps -in inputs/in.rbm
 #   lmp -var N 5000 -var Dr 1.0 -var dt 0.1 -var nsteps 10000 \
-#       -var rs geometric -log outputs/log.rbm_sphere_geometric -in inputs/in.rbm_sphere
-#   lmp -var N 5000 -var Dr 1.0 -var dt 0.1 -var nsteps 10000 \
-#       -var rs projection -log outputs/log.rbm_sphere_projection -in inputs/in.rbm_sphere
+#       -var manifold sphere -var rs projection \
+#       -log outputs/log_rbm_sphere_geometric.lammps -in inputs/in.rbm
+#   lmp -var N 5000 -var Dr 3.0 -var dt 0.1 -var nsteps 10000 \
+#       -var manifold circle -var rs geometric \
+#       -log outputs/log_rbm_circle_projection.lammps -in inputs/in.rbm
 #
 # Note:
+# - Default: manifold = sphere (override via "-var manifold circle")
 # - Default: rs = geometric (override via "-var rs projection")
 # - If you do not pass "-log ...", LAMMPS writes the default log file "log.lammps"
 #   in the current working directory
 # - For consistent log file naming/location in this repo, pass an explicit
-#   "-log outputs/log.rbm_sphere_projection" or "-log outputs/log.rbm_sphere_geometric".
+#   "-log outputs/log_rbm_sphere_geometric.lammps" or "-log outputs/log_rbm_circle_projection.lammps".
+
+
+# --- Choice of manifold / dimensionality (overridable via -var manifold circle) ---
+# manifold = sphere (3D rotation) | circle (2D rotation)
+variable manifold index sphere            # set the default value to "sphere" (3D rotation)
+print "manifold = ${manifold}"
 
 
 # --- Choice of the rotation integrator (overridable via -var rs projection) ---
 variable rs       index geometric         # set the default value of "rot_style" (rs)
+
 
 # --- Simulation parameters (overridable via -var) ---
 
@@ -56,15 +69,21 @@ print "rot_style = ${rs}"                 # output the type of rotational integr
 
 # --- System setup ---
 
+# choose 3D (sphere) or true 2D (circle)
+if "${manifold} == sphere" then "dimension 3"
+if "${manifold} == circle" then "dimension 2"
+if "${manifold} != sphere && ${manifold} != circle" then "print 'ERROR: manifold must be sphere or circle'" "quit 1"
+
 # Geometry, units, particle type
 units              lj                     # use Lennard-Jones (LJ) units
-dimension          3                      # three-dimensional motion
 boundary           p p p                  # periodic boundaries in all directions
 atom_style         hybrid sphere dipole   # spherical particles with orientation
 newton             off                    # no Newton's 3rd law for pairwise interactions, compute force contributions for each atom
 
 # Create a cubic box of size L
-region             box block 0 ${L} 0 ${L} 0 ${L}
+variable Lmin equal -0.5*${L}
+variable Lmax equal  0.5*${L}
+region             box block ${Lmin} ${Lmax}  ${Lmin} ${Lmax}  ${Lmin} ${Lmax}
 create_box         1 box
 
 # Create N particles at random positions in the box
@@ -126,7 +145,7 @@ thermo_style       custom step temp v_gamma_t v_gamma_r
 thermo             100
 
 # Output angles (from step 1 onwards) 
-dump               angles all custom 1 ${outdir}/angles_sphere_${rs}.raw f_ang_out
+dump               angles all custom 1 ${outdir}/angles_${manifold}_${rs}.raw f_ang_out
 dump_modify        angles append no sort id format line "%.9f"       # overwrite, do not append
 
 # do the run

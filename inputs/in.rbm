@@ -1,13 +1,15 @@
 # in.rbm
 #
+# Generic LAMMPS input script for the RBM benchmark (manifold = sphere|circle, method = geometric|projection)
+#
 # Overdamped rotational Brownian motion (RBM) of noninteracting dipolar particles
 # in the two (2D; here, pure 2D) or three (3D) dimensional space
 # - Overdamped dynamics for both translation and rotation
 # - N spheres or discs with orientations (dipoles) diffusing on the unit sphere or circle
 #   3D RBM: each particle is a spherical dipole diffusing on a sphere (manifold = sphere)
 #   2D RBM: each particle is a disc dipole diffusing on a circle (manifold = circle)
-# - Uses either the geometric integrator suggested in the reference below
-#   or the projection scheme due to Briels et al.
+# - Uses either the geometric integrator (method = geometric) suggested in the reference 
+#   below or the projection scheme (method = projection) due to Briels et al.
 #   as implemented in LAMMPS by fix brownian/sphere
 # - Outputs angle time series for all particles for statistical analysis
 #
@@ -19,15 +21,15 @@
 #   lmp -in inputs/in.rbm
 #   lmp -log outputs/log_rbm_circle_geometric.lammps -in inputs/in.rbm
 #   lmp -var N 5000 -var Dr 1.0 -var dt 0.1 -var nsteps 10000 \
-#       -var manifold sphere -var rs projection \
+#       -var manifold sphere -var method projection \
 #       -log outputs/log_rbm_sphere_geometric.lammps -in inputs/in.rbm
 #   lmp -var N 5000 -var Dr 3.0 -var dt 0.1 -var nsteps 10000 \
-#       -var manifold circle -var rs geometric \
+#       -var manifold circle -var method geometric \
 #       -log outputs/log_rbm_circle_projection.lammps -in inputs/in.rbm
 #
 # Note:
 # - Default: manifold = sphere (override via "-var manifold circle")
-# - Default: rs = geometric (override via "-var rs projection")
+# - Default: method = geometric (override via "-var method projection")
 # - If you do not pass "-log ...", LAMMPS writes the default log file "log.lammps"
 #   in the current working directory
 # - For consistent log file naming/location in this repo, pass an explicit
@@ -40,8 +42,8 @@ variable manifold index sphere            # set the default value to "sphere" (3
 print "manifold = ${manifold}"
 
 
-# --- Choice of the rotation integrator (overridable via -var rs projection) ---
-variable rs       index geometric         # set the default value of "rot_style" (rs)
+# --- Choice of the rotation integrator (overridable via -var method projection) ---
+variable method   index geometric         # set the default integrator "rot_style" (method) to geometric
 
 
 # --- Simulation parameters (overridable via -var) ---
@@ -65,7 +67,7 @@ variable gamma_r  equal ${T}/${Dr}        # rotational friction coefficient
 # all outputs go into a subdirectory "outputs" relative to the working directory
 variable outdir string "outputs"          # set the output directory
 shell mkdir ${outdir}                     # create output directory if it does not exist
-print "rot_style = ${rs}"                 # output the type of rotational integrator
+print "method (rot_style) = ${method}"    # output the type of rotational integrator
 
 # --- System setup ---
 
@@ -106,7 +108,7 @@ pair_style         none
 variable rng       string gaussian   # Gaussian noise distribution (zero mean, unit variance)
 
 # Overdamped Brownian dynamics for spheres with rotational degrees of freedom
-fix                BD all brownian/sphere ${T} ${seed_bd} rng ${rng} gamma_t ${gamma_t} gamma_r ${gamma_r} rot_style ${rs}
+fix                BD all brownian/sphere ${T} ${seed_bd} rng ${rng} gamma_t ${gamma_t} gamma_r ${gamma_r} rot_style ${method}
 
 timestep           ${dt}
 
@@ -145,7 +147,7 @@ thermo_style       custom step temp v_gamma_t v_gamma_r
 thermo             100
 
 # Output angles (from step 1 onwards) 
-dump               angles all custom 1 ${outdir}/angles_${manifold}_${rs}.raw f_ang_out
+dump               angles all custom 1 ${outdir}/angles_${manifold}_${method}.raw f_ang_out
 dump_modify        angles append no sort id format line "%.9f"       # overwrite, do not append
 
 # do the run

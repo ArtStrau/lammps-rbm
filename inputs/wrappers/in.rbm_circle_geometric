@@ -1,0 +1,12 @@
+# Convenience wrapper; canonical script is inputs/in.rbm
+#
+# Wrapper: circle (2D, S^1) + geometric integrator
+# Run from repo root:
+#   lmp -in inputs/wrappers/in.rbm_circle_geometric
+#   lmp -var N 5000 -var Dr 3.0 -var dt 0.1 -var nsteps 10000 \
+#       -log outputs/log_rbm_circle_geometric.lammps \
+#       -in inputs/wrappers/in.rbm_circle_geometric
+
+variable manifold index circle
+variable method   index geometric
+include inputs/in.rbm

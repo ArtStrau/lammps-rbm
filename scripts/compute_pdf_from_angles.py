@@ -7,33 +7,59 @@ Postprocess a LAMMPS dump of per-atom angles and produce
   1) a cleaned angle sample file (one angle per line), and
   2) a normalized probability density function (PDF) over [0, pi].
 
-The script is method independent: it only sees angles. Specify which
-method they came from (projection / geometric / ...) so that the
-output filenames are tagged accordingly.
+The script is manifold- (dimension) and method independent: it only
+sees angles obtained from LAMMPS simulation of for fully overdamped
+rotational Brownian motion (RBM). Specify the manifold (dimension)
+for RBM on 
+
+- sphere (3D RBM, manifold = sphere; orientation space S^2), or
+- circle (2D RBM, manifold = circle; orientation space S^1)
+
+and the method (intergator scheme) used
+
+- geometric integrator as proposed in the reference or
+- projection (Euler + projection) scheme.
+
+so that the output filenames are tagged accordingly.
+
+Reference: Felix Höfling & Arthur V. Straube, Phys. Rev. Research 7, 043034 (2025)
+(open access: https://doi.org/10.1103/wzdn-29p4).
 
 Typical usage from the repo root:
 
-    # projection data
+    # sphere (3D) + geometric integrator
     python scripts/compute_pdf_from_angles.py \
-        --input outputs/angles_sphere_projection.raw \
-        --method projection \
-        --N 1000 --Dt 1.0 --Dr 3.0 --dt 0.1 --nsteps 10000 [--nbins 180 --no-add-zero]
+        --manifold sphere --method geometric \
+        --N 10000 --Dt 1.0 --Dr 3.0 --dt 0.1 --nsteps 1000 [--nbins 180]
 
-    # geometric data
+    # circle (2D) + projection integrator
     python scripts/compute_pdf_from_angles.py \
-        --input outputs/angles_sphere_geometric.raw \
-        --method geometric \
-        --N 1000 --Dt 1.0 --Dr 3.0 --dt 0.1 --nsteps 10000 [--nbins 180 --no-add-zero]
+        --manifold circle --method projection \
+        --N 10000 --Dt 1.0 --Dr 3.0 --dt 0.1 --nsteps 1000 [--nbins 180]
 
-Note: by default, the script prepends a pdf(0)=0 point to the PDF output as follows from theory;
-Add the option --no-add-zero not to do this, using the lammps data only
+Here:
+   mandatory: (used to form output file names):
+  manifold = sphere | circle,
+    method = geometric | projection,
+        Dr is the rotational diffusion constant,
+        dt is the integration step
+   optional:
+         N is the number of particles,
+        Dt is the translational diffusion constant,
+    nsteps is the number of integration steps,
+     nbins is the resolution (number of bins, 180 by default).
 
-This will write, by default, files like
+By default, if you do not pass --input, the script reads from:
 
-    data/angles_lammps_proj_Dr3.0_dt0.01.dat
-    data/pdf_lammps_proj_Dr3.0_dt0.01.dat
+    outputs/angles_<manifold>_<method>.raw
 
-using whitespace-separated columns and '#' comment headers.
+Output files:
+
+    data/angles_lammps_<manifold>_<method>_Dr<Dr>_dt<dt>.dat
+    data/pdf_lammps_<manifold>_<method>_Dr<Dr>_dt<dt>.dat
+
+use '#' comment headers, which include the manifold, method and parameters,
+followed by whitespace-separated columns.
 """
 
 from __future__ import annotations
@@ -45,6 +71,11 @@ from typing import Tuple
 
 import numpy as np
 
+LOGTAG = "compute_pdf_from_angles"  # prefix in console logs
+
+# ---------------------------------------------------------------------------
+# Utilities
+# ---------------------------------------------------------------------------
 
 def load_angles_from_dump(path: Path) -> np.ndarray:
     """
@@ -104,6 +135,10 @@ def load_angles_from_dump(path: Path) -> np.ndarray:
     return np.asarray(angles, dtype=float)
 
 
+# ---------------------------------------------------------------------------
+# Formatting / output helpers
+# ---------------------------------------------------------------------------
+
 def format_param(value: float) -> str:
     """
     Format a float nicely for filenames.
@@ -129,30 +164,15 @@ def format_param(value: float) -> str:
     # return f"{value:.8g}"        # compact representation applies to all values
 
 
-def method_tag(method: str) -> str:
-    """Map a verbose method name to a short tag for filenames."""
-    m = method.lower()
-    if m.startswith("proj"):
-        return "proj"
-    if m.startswith("geom"):
-        return "geom"
-    return m  # fallback: use as-is
-
-
 def compute_pdf(
     angles: np.ndarray,
     nbins: int,
-    add_zero: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute a normalized PDF over [0, pi] from a 1D array of angles.
 
     Returns (theta, pdf) where theta are bin centers in [0, pi],
     and pdf(theta) is normalized so that the integral over [0, pi] is ~1.
-
-    If add_zero is True, a point (theta=0, pdf=0) is prepended.
-    This encodes the theoretical behavior at 0, even though
-    the histogram has no bin exactly at 0.
     """
     if angles.size == 0:
         raise ValueError("No angles found in input file.")
@@ -164,10 +184,6 @@ def compute_pdf(
         density=True,  # normalize to a PDF
     )
     centers = 0.5 * (edges[:-1] + edges[1:])
-
-    if add_zero:
-        centers = np.concatenate(([0.0], centers))
-        counts = np.concatenate(([0.0], counts))
 
     return centers, counts
 
@@ -206,6 +222,7 @@ def write_pdf_file(
     pdf: np.ndarray,
     *,
     method: str,
+    manifold: str,
     N: int | None,
     Dt: float | None,
     Dr: float,
@@ -215,7 +232,7 @@ def write_pdf_file(
 ) -> None:
     """Write angle–PDF pairs with a small header."""
     with path.open("w") as f:
-        f.write(f"# method: {method} (LAMMPS numerics)\n")
+        f.write(f"# Lammps numerics PDF ({manifold}, {method})\n")
         f.write(
             "# N={N} Dt={Dt} Dr={Dr} dt={dt} nsteps={nsteps} nbins={nbins}\n".format(
                 N=N if N is not None else "NA",
@@ -231,6 +248,10 @@ def write_pdf_file(
             f.write(f"{t:.9f} {p:.9e}\n")
 
 
+# ---------------------------------------------------------------------------
+# Main CLI
+# ---------------------------------------------------------------------------
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Compute angle PDF from LAMMPS dump of per-atom angles."
@@ -238,13 +259,21 @@ def main() -> None:
     parser.add_argument(
         "--input",
         "-i",
-        default="outputs/angles_sphere_projection.raw",
-        help="Path to LAMMPS dump with angles (relative to repo root).",
+        default=None,
+        help="Path to LAMMPS dump with angles (relative to repo root). Default: outputs/angles_<manifold>_<method>.raw",
     )
     parser.add_argument(
+        "--manifold",
+        choices=["sphere", "circle"],
+        default="sphere",
+        help="Manifold label for filenames and default input: sphere (3D) or circle (2D).",
+    )
+
+    parser.add_argument(
         "--method",
+        choices=["projection", "geometric"],
         required=True,
-        help="Method label, e.g. 'projection' or 'geometric'. Used for filenames and headers.",
+        help="Integrator method label for filenames and headers.",
     )
     parser.add_argument(
         "--dt",
@@ -283,11 +312,6 @@ def main() -> None:
         help="Number of histogram bins for the PDF (default: 180).",
     )
     parser.add_argument(
-        "--no-add-zero",
-        action="store_true",
-        help="Do NOT prepend a pdf(0)=0 point to the PDF output.",
-    )
-    parser.add_argument(
         "--out-dir",
         default="data",
         help="Directory to write output .dat files (relative to repo root).",
@@ -297,28 +321,32 @@ def main() -> None:
 
     # parent of scripts/ is the repo root
     repo_root = Path(__file__).resolve().parents[1]
+
+    if args.input is None:
+        args.input = f"outputs/angles_{args.manifold}_{args.method}.raw"
+
     input_path = (repo_root / args.input).resolve()
     out_dir = (repo_root / args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"[compute_pdf_from_angles] Repo root : {repo_root}")
-    print(f"[compute_pdf_from_angles] Input     : {input_path}")
-    print(f"[compute_pdf_from_angles] Out dir   : {out_dir}")
+    print(f"[{LOGTAG}] Repo root : {repo_root}")
+    print(f"[{LOGTAG}] Input     : {input_path}")
+    print(f"[{LOGTAG}] Out dir   : {out_dir}")
 
     # Load raw angles from the LAMMPS dump
     angles = load_angles_from_dump(input_path)
-    print(f"[compute_pdf_from_angles] Loaded {angles.size} angles.")
+    print(f"[{LOGTAG}] Loaded {angles.size} angles.")
 
     # Build method tag and parameter label for filenames
-    method = method_tag(args.method)   # "proj" or "geom"
-    origin = "lammps"                  # this script is for LAMMPS numerics
+    method = args.method              # "projection" or "geometric"
+    origin = "lammps"                 # this script is for LAMMPS numerics
     # for real-valued parameters (like Dr, dt) apply format_param, for integers do simply N_str = str(N)
     Dr_str = format_param(args.Dr)
     dt_str = format_param(args.dt)
     label = f"Dr{Dr_str}_dt{dt_str}"
 
-    angles_name = f"angles_{origin}_{method}_{label}.dat"
-    pdf_name    = f"pdf_{origin}_{method}_{label}.dat"
+    angles_name = f"angles_{origin}_{args.manifold}_{method}_{label}.dat"
+    pdf_name    = f"pdf_{origin}_{args.manifold}_{method}_{label}.dat"
 
     angles_path = out_dir / angles_name
     pdf_path = out_dir / pdf_name
@@ -334,19 +362,23 @@ def main() -> None:
         dt=args.dt,
         nsteps=args.nsteps,
     )
-    print(f"[compute_pdf_from_angles] Wrote angles to {angles_path}")
+    print(f"[{LOGTAG}] Wrote angles to {angles_path}")
 
     # Compute PDF and write it
     theta, pdf = compute_pdf(
         angles,
         nbins=args.nbins,
-        add_zero=not args.no_add_zero,
     )
+    # Histogram is piecewise-constant: check normalization via Σ p_i Δθ (not trapz on bin centers)
+    dtheta = math.pi / args.nbins
+    norm = float(np.sum(pdf) * dtheta)
+    print(f"[{LOGTAG}] PDF normalization: {norm:.6f}")
     write_pdf_file(
         pdf_path,
         theta,
         pdf,
         method=args.method,
+        manifold=args.manifold,
         N=args.N,
         Dt=args.Dt,
         Dr=args.Dr,
@@ -354,7 +386,7 @@ def main() -> None:
         nsteps=args.nsteps,
         nbins=args.nbins,
     )
-    print(f"[compute_pdf_from_angles] Wrote PDF to {pdf_path}")
+    print(f"[{LOGTAG}] Wrote PDF to {pdf_path}")
 
 
 if __name__ == "__main__":

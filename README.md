@@ -2,17 +2,20 @@
 
 This repository analyzes **fully overdamped rotational Brownian motion (RBM)** in LAMMPS and compares single-step rotation-angle **probability density functions (PDFs)** computed by different rotational integrators:
 
-- the current **Euler + projection** scheme and
-- an improved **geometric integrator** (proposed in the reference).
+- the common linear **Euler + projection** scheme and
+- a **geometric integrator** (proposed in the reference).
 
 The integrators target RBM of **axisymmetric particles** (orientation dynamics on the unit sphere with rotational diffusion). We benchmark the methods on a spherical particle with an orientation vector (`fix brownian/sphere`) for direct comparison with **analytical PDFs**.
 
 **Reference:** Felix Höfling & Arthur V. Straube, *Phys. Rev. Research* **7**, 043034 (2025), doi: [10.1103/wzdn-29p4](https://doi.org/10.1103/wzdn-29p4)
 
+Jupyter Notebooks: for [two](notebooks/compare_rbm_angle_pdfs_circle.ipynb) and [three](notebooks/compare_rbm_angle_pdfs_sphere.ipynb) dimensions
+
 ## Main result
 
-- For sufficiently small timesteps (left panel), both the current **Euler + projection** scheme and the proposed **geometric integrator** reproduce the analytical one-step PDF well.
+- For sufficiently small timesteps (left panel), both the common **Euler + projection** scheme and the proposed **geometric integrator** reproduce the analytical one-step PDF well.
 - For larger timesteps (right panel), the Euler+projection scheme deviates strongly, whereas the geometric integrator remains close to the analytical result.
+- The geometric integrator allows for about ten times larger integration steps, depending on interaction potentials, and speeds up simulations.
 
 <div align="center">
   <img src="figs/pdf_Dr1.0_dt0.02_comparison.png" width="340"> &ensp;

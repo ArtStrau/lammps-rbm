@@ -1,11 +1,11 @@
 # lammps-rbm
 
-This repository analyzes **fully overdamped rotational Brownian motion (RBM)** in LAMMPS and compares single-step rotation-angle **probability density functions (PDFs)** computed by different rotational integrators:
+This repository analyzes **fully overdamped rotational Brownian motion (RBM)** in [LAMMPS](https://www.lammps.org/) and compares single-step rotation-angle **probability density functions (PDFs)** computed by different rotational integrators:
 
 - the common linear **Euler + projection** scheme and
 - a **geometric integrator** (proposed in the reference).
 
-Generally, the integrators target RBM of **axisymmetric particles** in two (2D) and (3D) dimensions. Here we benchmark the methods on a fully symmetric particle with an orientation vector (LAMMPS `fix brownian/sphere`) against **analytical one-step PDFs** for torque-free diffusion in both **2D** (**circle**, orientation space $S^1$) and **3D** (**sphere**, orientation space $S^2$).
+Generally, the integrators target RBM of **axisymmetric particles** in two (2D) and three (3D) dimensions. Here we benchmark the methods on a fully symmetric particle with an orientation vector (LAMMPS [`fix brownian/sphere`](https://docs.lammps.org/fix_brownian.html)) against **analytical one-step PDFs** for torque-free diffusion in both **2D** (**circle**, orientation space $S^1$) and **3D** (**sphere**, orientation space $S^2$).
 
 **Jupyter Notebooks:** Comparison of PDFs for [**2D RBM**](notebooks/compare_rbm_angle_pdfs_circle.ipynb) and [**3D RBM**](notebooks/compare_rbm_angle_pdfs_sphere.ipynb).
 
@@ -58,8 +58,9 @@ Generally, the integrators target RBM of **axisymmetric particles** in two (2D) 
 
 2. **Compute PDFs from LAMMPS angles** (numerics):
 
-   * `scripts/compute_pdf_from_angles.py`  
-     → `data/pdf_lammps_<manifold>_<method>_Dr<Dr>_dt<dt>.dat`
+   * `scripts/compute_pdf_from_angles.py` (uses raw angles `outputs/angles_<manifold>_<method>.raw`)  
+     → `data/angles_lammps_<manifold>_<method>_Dr<Dr>_dt<dt>.dat` (cleaned angles)  
+     → `data/pdf_lammps_<manifold>_<method>_Dr<Dr>_dt<dt>.dat`  (PDFs)
 
 3. **Compute analytical PDFs** (exact, projection, geometric):
 
@@ -68,9 +69,13 @@ Generally, the integrators target RBM of **axisymmetric particles** in two (2D) 
       → `data/pdf_theory_<manifold>_projection_Dr<Dr>_dt<dt>.dat`  
       → `data/pdf_theory_<manifold>_geometric_Dr<Dr>_dt<dt>.dat`
 
-4. **Compare and plot** (loads precomputed `.dat` files):
+4. **Compare and plot** (loads precomputed PDF `.dat` files):
 
-   * [2D RBM](notebooks/compare_rbm_angle_pdfs_circle.ipynb): `notebooks/compare_rbm_angle_pdfs_circle.ipynb` → figures in `figs/` (PNG/PDF)
-   * [3D RBM](notebooks/compare_rbm_angle_pdfs_sphere.ipynb): `notebooks/compare_rbm_angle_pdfs_sphere.ipynb` → figures in `figs/` (PNG/PDF)
-   
+   * 2D RBM: [`notebooks/compare_rbm_angle_pdfs_circle.ipynb`](notebooks/compare_rbm_angle_pdfs_circle.ipynb)  
+      → `figs/compare_pdf_circle_Dr<Dr>_dt<dt>.png`  
+      → `figs/compare_pdf_circle_Dr<Dr>_dt<dt>.pdf`
+
+   * 3D RBM: [`notebooks/compare_rbm_angle_pdfs_sphere.ipynb`](notebooks/compare_rbm_angle_pdfs_sphere.ipynb)  
+      → `figs/compare_pdf_sphere_Dr<Dr>_dt<dt>.png`  
+      → `figs/compare_pdf_sphere_Dr<Dr>_dt<dt>.pdf`
 

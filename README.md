@@ -39,6 +39,9 @@ Generally, the integrators target RBM of **axisymmetric particles** in two (2D) 
 
 ## Pipeline (LAMMPS → PDFs → figures)
 
+0.   **Prerequisite (LAMMPS build):** Until the geometric RBM integrator is merged upstream, run this pipeline with LAMMPS from my fork
+   ([ArtStrau/lammps](https://github.com/ArtStrau/lammps)), branch [`brownian-sphere-rotgeom`](https://github.com/ArtStrau/lammps/tree/brownian-sphere-rotgeom), rebased on upstream tag `patch_10Dec2025`.
+
 0. **Setup** (point to your LAMMPS executable)
 
    Create `config/lammps_path.txt` containing one line: the path to your `lmp` executable. If the file is absent, the launcher falls back to calling `lmp` from `PATH`.

@@ -38,36 +38,36 @@
 
 # --- Choice of manifold / dimensionality (overridable via -var manifold circle) ---
 # manifold = sphere (3D rotation) | circle (2D rotation)
-variable manifold index sphere            # set the default value to "sphere" (3D rotation)
+variable manifold index sphere              # set the default value to "sphere" (3D rotation)
 print "manifold = ${manifold}"
 
 
 # --- Choice of the rotation integrator (overridable via -var method projection) ---
-variable method   index geometric         # set the default integrator "rot_style" (method) to geometric
+variable method   index geometric           # set the default integrator "rotation_style" (method) to geometric
 
 
 # --- Simulation parameters (overridable via -var) ---
 
-variable N        index 10000             # number of noninteracting dipolar particles
-variable L        index 10.0              # simulation box size
-variable T        index 1.0               # temperature (LJ units; k_B = 1)
-variable Dt       index 1.0               # translational diffusion coefficient
-variable Dr       index 1.0               # rotational diffusion coefficient
-variable dt       index 3.0e-1            # integration timestep
-variable nsteps   index 1000              # total number of integration steps
+variable N        index 10000               # number of noninteracting dipolar particles
+variable L        index 10.0                # simulation box size
+variable T        index 1.0                 # temperature (LJ units; k_B = 1)
+variable Dt       index 1.0                 # translational diffusion coefficient
+variable Dr       index 1.0                 # rotational diffusion coefficient
+variable dt       index 3.0e-1              # integration timestep
+variable nsteps   index 1000                # total number of integration steps
 
-variable seed_pos index 13579             # random seed for initial positions
-variable seed_dip index 24681357          # random seed for initial dipole orientations
-variable seed_bd  index 97531             # random seed for Brownian noise
+variable seed_pos index 13579               # random seed for initial positions
+variable seed_dip index 24681357            # random seed for initial dipole orientations
+variable seed_bd  index 97531               # random seed for Brownian noise
 
 # Einstein relations (k_B = 1 in LJ units):
-variable gamma_t  equal ${T}/${Dt}        # translational friction coefficient
-variable gamma_r  equal ${T}/${Dr}        # rotational friction coefficient
+variable gamma_t  equal ${T}/${Dt}          # translational friction coefficient
+variable gamma_r  equal ${T}/${Dr}          # rotational friction coefficient
 
 # all outputs go into a subdirectory "outputs" relative to the working directory
-variable outdir string "outputs"          # set the output directory
-shell mkdir ${outdir}                     # create output directory if it does not exist
-print "method (rot_style) = ${method}"    # output the type of rotational integrator
+variable outdir string "outputs"            # set the output directory
+shell mkdir ${outdir}                       # create output directory if it does not exist
+print "method (rotation_style) = ${method}" # output the type of rotational integrator
 
 # --- System setup ---
 
@@ -77,10 +77,10 @@ if "${manifold} == circle" then "dimension 2"
 if "${manifold} != sphere && ${manifold} != circle" then "print 'ERROR: manifold must be sphere or circle'" "quit 1"
 
 # Geometry, units, particle type
-units              lj                     # use Lennard-Jones (LJ) units
-boundary           p p p                  # periodic boundaries in all directions
-atom_style         hybrid sphere dipole   # spherical particles with orientation
-newton             off                    # no Newton's 3rd law for pairwise interactions, compute force contributions for each atom
+units              lj                       # use Lennard-Jones (LJ) units
+boundary           p p p                    # periodic boundaries in all directions
+atom_style         hybrid sphere dipole     # spherical particles with orientation
+newton             off                      # no Newton's 3rd law for pairwise interactions, compute force contributions for each atom
 
 # Create a cubic box of size L
 variable Lmin equal -0.5*${L}
@@ -92,7 +92,7 @@ create_box         1 box
 create_atoms       1 random ${N} ${seed_pos} NULL
 
 # Size/mass (type mass required, diameter, and density -> per-atom mass computed)
-mass               1 1.0                 # irrelevant for overdamped dynamics, formally required
+mass               1 1.0                    # irrelevant for overdamped dynamics, formally required
 set                type 1 diameter 1.0
 set                type 1 density 1.0
 
@@ -108,7 +108,7 @@ pair_style         none
 variable rng       string gaussian   # Gaussian noise distribution (zero mean, unit variance)
 
 # Overdamped Brownian dynamics for spheres with rotational degrees of freedom
-fix                BD all brownian/sphere ${T} ${seed_bd} rng ${rng} gamma_t ${gamma_t} gamma_r ${gamma_r} rot_style ${method}
+fix                BD all brownian/sphere ${T} ${seed_bd} rng ${rng} gamma_t ${gamma_t} gamma_r ${gamma_r} rotation_style ${method}
 
 timestep           ${dt}
 
